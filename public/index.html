@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="host-doc">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title>新春年会抽奖 · 大屏</title>
+  <link rel="stylesheet" href="/css/theme.css" />
+  <link rel="stylesheet" href="/css/host.css" />
+</head>
+<body class="page host">
+  <!-- 背景：art.js 程序化 2.5D 场景（缺失时降级为 CSS 夜空） -->
+  <canvas id="bg" class="host-bg" aria-hidden="true"></canvas>
+  <div class="host-veil" aria-hidden="true"></div>
+  <div class="host-haze" aria-hidden="true"></div>
+
+  <!-- 顶部悬挂灯笼（纯 CSS 立体灯笼） -->
+  <div class="host-lanterns" aria-hidden="true">
+    <i class="lantern lantern--l1"></i>
+    <i class="lantern lantern--l2"></i>
+    <i class="lantern lantern--r1"></i>
+    <i class="lantern lantern--r2"></i>
+  </div>
+
+  <div class="host-shell">
+    <!-- ======================= 顶栏 ======================= -->
+    <header class="host-head">
+      <div class="host-head__brand">
+        <div class="seal" aria-hidden="true"><span>春</span></div>
+        <div class="host-head__titles">
+          <h1 class="host-title gold-text" id="hTitle">新春年会抽奖</h1>
+          <p class="host-subtitle" id="hSubtitle">扫码入场 · 灯阵夺魁 · 好运连连</p>
+        </div>
+      </div>
+      <div class="host-head__meta">
+        <span class="badge badge--live" id="hPhase">大厅候场</span>
+        <span class="chip chip--diff" id="hDiff"><i class="chip__dot" id="hDiffDot"></i><b id="hDiffText">简单</b></span>
+        <span class="chip" id="hAward"><span class="muted">已出奖</span><b class="num" id="hAwardNum">0 / 0</b></span>
+        <span class="conn" id="hConn" data-state="pending"><i class="conn__dot"></i><span id="hConnText">连接中</span></span>
+      </div>
+    </header>
+
+    <!-- ======================= 主舞台 ======================= -->
+    <main class="host-main">
+      <!-- ---------- 大厅 ---------- -->
+      <section class="view view--lobby" id="vLobby">
+        <aside class="lobby-side">
+          <section class="panel room-card">
+            <div class="room-card__label">房 间 号</div>
+            <div class="room-code num" id="hRoom">- - - - - -</div>
+            <div class="room-card__foot">
+              <span class="count-ring" id="hCountRing">
+                <b class="num" id="hJoined">0</b><i>/</i><span class="num" id="hMax">30</span>
+              </span>
+              <span class="room-card__hint">位嘉宾已入场</span>
+            </div>
+            <div class="room-card__bar"><i id="hJoinedBar"></i></div>
+          </section>
+
+          <section class="panel qr-card">
+            <div class="qr-frame qr-frame--host" id="hQrFrame">
+              <img id="hQr" alt="扫码加入房间" width="240" height="240" />
+              <div class="qr-fallback" id="hQrFallback">二维码<br />生成中…</div>
+            </div>
+            <div class="qr-card__text">
+              <div class="qr-card__title">扫码入场</div>
+              <div class="qr-card__sub">手机扫码 → 输入昵称 → 挑战灯阵</div>
+              <div class="join-url num" id="hJoinUrl">等待主机下发地址…</div>
+            </div>
+            <div class="qr-card__steps">
+              <span class="qr-step"><b>1</b>扫码</span>
+              <span class="qr-step"><b>2</b>输昵称</span>
+              <span class="qr-step"><b>3</b>玩灯阵</span>
+            </div>
+            <div class="qr-card__rule">
+              本场难度 <b id="hRuleDiff">简单</b><span id="hRuleDesc"> · 零容错</span>
+            </div>
+          </section>
+        </aside>
+
+        <div class="lobby-stage">
+          <div class="lobby-stage__head">
+            <span class="stage-title"><i class="stage-title__dot"></i>嘉宾入场区</span>
+            <span class="stage-sub" id="hLobbySub">等待玩家入场…</span>
+          </div>
+          <div class="stage3d" id="stageLobby">
+            <div class="stage3d__sky"></div>
+            <div class="stage3d__floor"></div>
+            <div class="stage3d__horizon"></div>
+            <div class="stage3d__beam stage3d__beam--l"></div>
+            <div class="stage3d__beam stage3d__beam--r"></div>
+            <div class="stage3d__actors" id="actorsLobby"></div>
+            <div class="stage-empty" id="lobbyEmpty">
+              <div class="stage-empty__ring"><span>扫码</span></div>
+              <div class="stage-empty__title">扫码入场，登上灯阵舞台</div>
+              <div class="stage-empty__sub">玩家加入后，头像会在这里依次亮起</div>
+            </div>
+          </div>
+
+          <div class="prize-rail">
+            <div class="prize-rail__head">
+              <span class="stage-title"><i class="stage-title__dot"></i>奖品池</span>
+              <span class="prize-rail__sum" id="hPrizeSum">共 0 件</span>
+            </div>
+            <div class="prize-track" id="prizeTrack"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- 游戏中 ---------- -->
+      <section class="view view--playing hidden" id="vPlaying">
+        <aside class="play-side">
+          <div class="prog-grid">
+            <div class="prog prog--won">
+              <span class="prog__label">已通关</span>
+              <b class="prog__num num" id="pWon">0</b>
+            </div>
+            <div class="prog prog--playing">
+              <span class="prog__label">挑战中</span>
+              <b class="prog__num num" id="pPlaying">0</b>
+            </div>
+            <div class="prog prog--idle">
+              <span class="prog__label">未开始</span>
+              <b class="prog__num num" id="pIdle">0</b>
+            </div>
+          </div>
+
+          <div class="play-diff panel">
+            <div class="play-diff__head">
+              <span class="badge badge--gold" id="pDiffLabel">简单</span>
+              <span class="play-diff__waves" id="pDiffWaves">2 波灯阵</span>
+            </div>
+            <p class="play-diff__desc" id="pDiffDesc">入门即硬核：8 盏灯、零失误才通关</p>
+            <div class="play-diff__meta">
+              <span class="muted">预估通关</span><b id="pDiffPass">约 8%</b>
+            </div>
+          </div>
+
+          <div class="ticker">
+            <div class="ticker__head"><i class="stage-title__dot"></i>现场中奖</div>
+            <div class="ticker__list" id="tickerList">
+              <div class="ticker__empty">静候第一位通关者…</div>
+            </div>
+          </div>
+        </aside>
+
+        <div class="play-stage">
+          <div class="lobby-stage__head">
+            <span class="stage-title"><i class="stage-title__dot"></i>灯阵挑战现场</span>
+            <span class="stage-sub" id="hPlaySub">全员就位</span>
+          </div>
+          <div class="stage3d stage3d--play" id="stagePlaying">
+            <div class="stage3d__sky"></div>
+            <div class="stage3d__floor"></div>
+            <div class="stage3d__horizon"></div>
+            <div class="stage3d__beam stage3d__beam--l"></div>
+            <div class="stage3d__beam stage3d__beam--r"></div>
+            <div class="stage3d__actors" id="actorsPlaying"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- 开奖 ---------- -->
+      <section class="view view--reveal hidden" id="vReveal">
+        <div class="reveal-head">
+          <h2 class="reveal-title gold-text" id="revealTitle">恭喜中奖</h2>
+          <p class="reveal-sub" id="revealSub">本轮共 0 位嘉宾夺奖</p>
+          <p class="reveal-hint" id="revealHint">请中奖嘉宾上台领奖 · 福气满堂</p>
+        </div>
+        <div class="reveal-body" id="revealBody">
+          <div class="reveal-groups" id="revealGroups"></div>
+          <div class="reveal-empty hidden" id="revealEmpty">
+            <div class="reveal-empty__icon">🍃</div>
+            <h3 class="reveal-empty__title">本轮无人通关</h3>
+            <p class="reveal-empty__text">灯阵无情，福气不减 —— 下一轮，等你登台！</p>
+            <p class="reveal-empty__tip">主持人可在后台一键重置，开启新一轮</p>
+          </div>
+        </div>
+        <div class="reveal-stats" id="revealStats"></div>
+      </section>
+    </main>
+
+    <!-- ======================= 页脚 ======================= -->
+    <footer class="host-foot">
+      <span class="host-foot__hint">扫码入场 · 灯阵夺魁 · 好运连连</span>
+      <span class="host-foot__mid">
+        主持人控制台 <a href="/admin" target="_blank" rel="noopener">/admin</a>
+      </span>
+      <span class="host-foot__hint">按 F11 全屏投影 · 建议 1920×1080</span>
+    </footer>
+  </div>
+
+  <!-- 3-2-1 开赛倒计时 -->
+  <div class="countdown hidden" id="countdown" aria-hidden="true">
+    <div class="countdown__ring"></div>
+    <div class="countdown__text" id="countdownText">灯阵即将开启</div>
+    <div class="countdown__num num" id="countdownNum">3</div>
+  </div>
+
+  <!-- 中奖浮层 & 提示 -->
+  <div class="award-layer" id="awardLayer" aria-live="polite"></div>
+  <div class="toast-layer" id="toastLayer" aria-live="polite"></div>
+
+  <script src="/js/net.js"></script>
+  <script src="/js/art.js"></script>
+  <script src="/js/host.js"></script>
+</body>
+</html>

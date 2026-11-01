@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a0506" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>灯阵夺魁 · 新春年会</title>
+  <link rel="stylesheet" href="/css/theme.css" />
+  <link rel="stylesheet" href="/css/player.css" />
+</head>
+<body class="page play">
+  <canvas id="fx" aria-hidden="true"></canvas>
+
+  <div class="net-banner hidden" id="netBanner" role="status" aria-live="polite">
+    <span class="net-banner__dot"></span>
+    <span id="netBannerText">网络波动，重连中…</span>
+  </div>
+
+  <div class="toast-layer" id="toastLayer" aria-live="polite"></div>
+
+  <main class="app" id="app">
+    <!-- ============ 启动 ============ -->
+    <section class="screen boot-screen" id="screen-boot">
+      <div class="boot-lanterns" aria-hidden="true"><span>🏮</span><span>🏮</span><span>🏮</span></div>
+      <div class="boot-loading" aria-hidden="true"><i></i><i></i><i></i></div>
+      <p class="boot-text">正在入场…</p>
+    </section>
+
+    <!-- ============ 加入 ============ -->
+    <section class="screen join-screen hidden" id="screen-join">
+      <header class="join-head">
+        <p class="join-kicker"><span class="kicker-line"></span>新春年会 · 灯阵夺魁<span class="kicker-line"></span></p>
+        <h1 class="join-title gold-text">扫码入场</h1>
+        <p class="join-sub">输入房间号 · 选好头像 · 即刻就位</p>
+      </header>
+
+      <form class="panel join-panel" id="joinForm" novalidate>
+        <div class="field">
+          <label class="label" for="roomCode">房间号</label>
+          <div class="code-row">
+            <input
+              class="input input--num code-input"
+              id="roomCode"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="6"
+              autocomplete="one-time-code"
+              enterkeyhint="next"
+              placeholder="000000"
+              aria-describedby="codeHint"
+            />
+            <button type="button" class="btn btn--ghost paste-btn" id="pasteBtn">粘贴</button>
+          </div>
+          <p class="hint" id="codeHint">扫大屏二维码可自动带入房间号</p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="nickname">昵称 <span class="label-weak">1–12 字</span></label>
+          <div class="input-wrap">
+            <input
+              class="input"
+              id="nickname"
+              maxlength="24"
+              autocomplete="nickname"
+              enterkeyhint="done"
+              placeholder="给自己取个响亮的名字"
+            />
+            <span class="input-counter num" id="nameCount">0/12</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label">选择头像</span>
+          <div class="avatar-grid" id="avatarList" role="radiogroup" aria-label="选择头像"></div>
+        </div>
+
+        <div class="pool-mini" id="joinPool">
+          <p class="label">奖品池预览</p>
+          <div class="pool-mini__list" id="joinPoolList"><span class="muted">加载中…</span></div>
+        </div>
+
+        <p class="form-error" id="joinError" role="alert" aria-live="assertive"></p>
+
+        <button class="btn btn--gold btn--lg btn--block join-submit" id="joinBtn" type="submit">进入会场</button>
+      </form>
+
+      <p class="join-foot muted">入场后请保持页面打开 · 关闭可能错过开赛</p>
+    </section>
+
+    <!-- ============ 等待 ============ -->
+    <section class="screen wait-screen hidden" id="screen-wait">
+      <header class="wait-head">
+        <p class="wait-kicker">新春年会 · 灯阵夺魁</p>
+        <h1 class="wait-title gold-text" id="waitTitle">已就位</h1>
+      </header>
+
+      <div class="wait-player card">
+        <div class="wait-avatar" id="waitAvatar">🐲</div>
+        <div class="wait-player__meta">
+          <p class="wait-name" id="waitName">玩家</p>
+          <p class="wait-status"><span class="pulse-dot" aria-hidden="true"></span><span id="waitStatusText">等待主持人开赛</span></p>
+        </div>
+        <div class="wait-count">
+          <b class="num" id="waitJoined">0</b><span class="wait-count__sep">/</span><b class="num" id="waitMax">30</b>
+          <span class="wait-count__label">人</span>
+        </div>
+      </div>
+
+      <div class="wait-diff card" id="waitDiff">
+        <div class="row row--between">
+          <span class="badge badge--gold" id="diffBadge">简单</span>
+          <span class="muted" id="diffPass">预估通关 约 8%</span>
+        </div>
+        <p class="wait-diff__desc" id="diffDesc">最低档也极难：两波灯阵、零容错</p>
+        <div class="wait-chips">
+          <span class="chip" id="diffWaves">2 波</span>
+          <span class="chip" id="diffStrikes">零失误</span>
+          <span class="chip chip--gold hidden" id="diffGuarantee">完成必得奖</span>
+        </div>
+      </div>
+
+      <div class="wait-pool card">
+        <div class="row row--between wait-pool__head">
+          <span class="panel__title">奖品池</span>
+          <span class="faint" id="poolTotal"></span>
+        </div>
+        <div class="pool-list" id="waitPoolList"></div>
+      </div>
+
+      <div class="wait-anim" aria-hidden="true">
+        <div class="wait-lanterns"><span>🏮</span><span>🏮</span><span>🏮</span></div>
+        <p class="wait-tip">等待主持人开赛<span class="dots"><i>.</i><i>.</i><i>.</i></span></p>
+      </div>
+    </section>
+
+    <!-- ============ 倒计时 ============ -->
+    <section class="screen count-screen hidden" id="screen-count">
+      <p class="count-label" id="countLabel">即将开始</p>
+      <div class="count-num" id="countNum">3</div>
+      <p class="count-hint">灯阵 · 连击</p>
+      <div class="count-track" aria-hidden="true"><i></i></div>
+    </section>
+
+    <!-- ============ 游戏 ============ -->
+    <section class="screen game-screen hidden" id="screen-game">
+      <header class="game-head">
+        <div class="game-wave">
+          <span class="game-wave__label">第</span>
+          <b class="num" id="waveNow">1</b>
+          <span class="game-wave__label">/<b class="num" id="waveTotal">2</b> 波</span>
+        </div>
+        <div class="game-score">
+          <span class="game-score__label">得分</span>
+          <b class="num" id="gameScore">0</b>
+        </div>
+        <div class="game-strikes"><span id="strikeText">零失误</span></div>
+      </header>
+
+      <div class="game-phase">
+        <span class="game-phase__pill" id="gamePhase">准备</span>
+      </div>
+
+      <div class="ring-wrap">
+        <div class="ring-stage" id="ringStage">
+          <div class="ring-ground" aria-hidden="true"></div>
+          <div class="ring" id="ring"></div>
+          <div class="ring-center">
+            <p class="ring-center__title" id="ringCenterTitle">凝神</p>
+            <p class="ring-center__sub" id="ringCenterSub">记住灯笼亮起的顺序</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-timer hidden" id="inputTimer">
+        <div class="input-timer__track"><div class="input-timer__bar" id="inputBar"></div></div>
+        <div class="input-timer__meta">
+          <span>复现时限</span>
+          <span class="num" id="inputLeft">0.0s</span>
+        </div>
+      </div>
+
+      <p class="game-tip" id="gameTip">等待开赛…</p>
+
+      <div class="wave-flash hidden" id="waveFlash" aria-live="polite">
+        <p class="wave-flash__title" id="waveFlashTitle"></p>
+        <p class="wave-flash__sub" id="waveFlashSub"></p>
+      </div>
+    </section>
+
+    <!-- ============ 结算 ============ -->
+    <section class="screen result-screen hidden" id="screen-result">
+      <header class="result-head">
+        <p class="result-flag" id="resultFlag">本轮结算</p>
+        <h1 class="result-title gold-text" id="resultTitle">通关</h1>
+        <p class="result-sub" id="resultSub">恭喜完成灯阵挑战</p>
+      </header>
+
+      <div class="prize-card hidden" id="prizeCard">
+        <div class="prize-card__foil" aria-hidden="true"></div>
+        <p class="prize-card__label" id="prizeLabel">恭喜中奖</p>
+        <div class="prize-card__emoji" id="prizeEmoji">🎁</div>
+        <p class="prize-card__name" id="prizeName">奖品发放中…</p>
+        <p class="prize-card__note" id="prizeNote"></p>
+      </div>
+
+      <div class="lose-card hidden" id="loseCard">
+        <span class="lose-card__emoji" aria-hidden="true">🍀</span>
+        <div>
+          <p class="lose-card__title" id="loseTitle">差一点点</p>
+          <p class="lose-card__text" id="loseText">下一轮好运一定轮到你</p>
+        </div>
+      </div>
+
+      <div class="result-stats" id="resultStats"></div>
+
+      <p class="result-bless" id="resultBless"></p>
+
+      <div class="reveal-state hidden" id="revealState">
+        <span class="badge badge--live">本轮开奖</span>
+        <p class="reveal-state__text" id="revealText">主持人正在揭晓…</p>
+      </div>
+
+      <div class="result-foot">
+        <p class="result-wait" id="resultWait"><span class="pulse-dot" aria-hidden="true"></span><span id="resultWaitText">成绩已提交，等待大屏开奖</span></p>
+        <p class="faint" id="resultTip">开奖后请留意大屏中奖名单</p>
+      </div>
+    </section>
+  </main>
+
+  <noscript>
+    <div style="position:fixed;inset:0;display:grid;place-items:center;background:#130708;color:#fbeedd;padding:24px;text-align:center;z-index:99">
+      请开启 JavaScript 后重新打开本页面。
+    </div>
+  </noscript>
+
+  <script src="/js/net.js"></script>
+  <script src="/js/player.js"></script>
+</body>
+</html>

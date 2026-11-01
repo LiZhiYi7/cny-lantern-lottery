@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#1a0506">
+  <title>主持人后台 · 新春年会抽奖</title>
+  <link rel="stylesheet" href="/css/theme.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="page admin-page">
+
+  <!-- 夜宴氛围：纯 CSS 光晕与灯笼，无外链资源 -->
+  <div class="admin-atmos" aria-hidden="true">
+    <span class="admin-atmos__glow admin-atmos__glow--a"></span>
+    <span class="admin-atmos__glow admin-atmos__glow--b"></span>
+    <span class="admin-atmos__lantern admin-atmos__lantern--l"></span>
+    <span class="admin-atmos__lantern admin-atmos__lantern--r"></span>
+  </div>
+
+  <div id="toastLayer" class="toast-layer" role="status" aria-live="polite"></div>
+
+  <!-- 启动遮罩：校验登录态期间避免登录页闪烁 -->
+  <div id="bootSplash" class="boot-splash">
+    <div class="boot-splash__lantern float" aria-hidden="true">🏮</div>
+    <p class="boot-splash__text">正在校验登录状态…</p>
+  </div>
+
+  <!-- ================= 登录 ================= -->
+  <section id="loginView" class="login-view hidden" aria-label="后台登录">
+    <div class="login-card panel fade-in">
+      <div class="login-card__halo" aria-hidden="true"></div>
+      <div class="login-card__head">
+        <div class="login-card__lantern float" aria-hidden="true">🏮</div>
+        <h1 class="login-card__title gold-text">新春年会</h1>
+        <p class="login-card__sub">抽奖系统 · 主持人后台</p>
+      </div>
+      <div class="divider"></div>
+      <form id="loginForm" autocomplete="off" novalidate>
+        <div class="field">
+          <label class="label" for="pinInput">管理 PIN</label>
+          <input id="pinInput" class="input input--num login-card__pin" type="password"
+                 inputmode="numeric" autocomplete="current-password" maxlength="8"
+                 placeholder="••••" aria-describedby="pinHint loginError">
+          <p id="pinHint" class="login-card__hint">初始 PIN 为 <b class="num">8888</b>，登录后可在「规则设置」修改</p>
+        </div>
+        <p id="loginError" class="login-error hidden" role="alert"></p>
+        <button id="loginBtn" class="btn btn--gold btn--lg btn--block" type="submit">进入后台</button>
+      </form>
+      <p class="login-card__foot">仅主持人使用 · 请勿在投影 / 大屏上打开本页</p>
+    </div>
+  </section>
+
+  <!-- ================= 后台 ================= -->
+  <div id="appView" class="admin-shell hidden">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <span class="sidebar__seal" aria-hidden="true">春</span>
+        <div class="sidebar__brand-text">
+          <div class="sidebar__title">新春后台</div>
+          <div class="sidebar__sub">YEAR OF HORSE · 主持台</div>
+        </div>
+      </div>
+
+      <nav class="sidebar__nav" aria-label="后台导航">
+        <div class="nav-group">
+          <div class="nav-group__label">运营台</div>
+          <button type="button" class="nav-item is-active" data-view="overview">
+            <span class="nav-item__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></svg>
+            </span>
+            <span class="nav-item__text">总览</span>
+          </button>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-group__label">活动配置</div>
+          <button type="button" class="nav-item" data-view="prizes">
+            <span class="nav-item__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8"/><path d="M12 8v13"/><path d="M12 8S10.5 3 8 3a2.5 2.5 0 0 0 0 5z"/><path d="M12 8s1.5-5 4-5a2.5 2.5 0 0 1 0 5z"/></svg>
+            </span>
+            <span class="nav-item__text">奖品管理</span>
+            <span class="nav-item__meta" id="navPrizeBadge">0</span>
+          </button>
+          <button type="button" class="nav-item" data-view="rules">
+            <span class="nav-item__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="8" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
+            </span>
+            <span class="nav-item__text">规则设置</span>
+          </button>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-group__label">现场管理</div>
+          <button type="button" class="nav-item" data-view="players">
+            <span class="nav-item__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.6 20a6.4 6.4 0 0 1 12.8 0"/><path d="M16.5 5.2a3.2 3.2 0 0 1 0 5.6"/><path d="M18.4 14.2A6.4 6.4 0 0 1 22 20"/></svg>
+            </span>
+            <span class="nav-item__text">玩家列表</span>
+            <span class="nav-item__meta" id="navPlayerBadge">0</span>
+          </button>
+          <button type="button" class="nav-item" data-view="winners">
+            <span class="nav-item__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 5H5.5a2.5 2.5 0 0 0 2.5 4"/><path d="M16 5h2.5a2.5 2.5 0 0 1-2.5 4"/><path d="M12 13v3"/><path d="M8.5 21h7"/><path d="M10 21v-2.2a2 2 0 0 1 .8-1.6l1.2-.9 1.2.9a2 2 0 0 1 .8 1.6V21"/></svg>
+            </span>
+            <span class="nav-item__text">中奖名单</span>
+            <span class="nav-item__meta" id="navWinnerBadge">0</span>
+          </button>
+        </div>
+      </nav>
+
+      <div class="sidebar__foot">
+        <div class="conn" id="connState" data-state="connecting">
+          <span class="conn__dot" aria-hidden="true"></span>
+          <span class="conn__text">连接中…</span>
+        </div>
+        <div class="sidebar__version">单机局域网 · 离线可用</div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <div class="topbar__heading">
+          <h2 class="topbar__title" id="viewTitle">总览</h2>
+          <p class="topbar__hint" id="viewHint">房间与现场状态一览</p>
+        </div>
+        <div class="topbar__right">
+          <span class="badge badge--live" id="topLive">实时同步</span>
+          <span class="badge" id="topPhase">等待入场</span>
+          <a class="btn btn--ghost btn--sm" id="hostLink" href="/" target="_blank" rel="noopener">大屏 ↗</a>
+          <span class="badge badge--jade" id="topAuth">已登录</span>
+          <button type="button" class="btn btn--ghost btn--sm" id="logoutBtn">退出</button>
+        </div>
+      </header>
+
+      <main class="views" id="views">
+
+        <!-- ============ 总览 ============ -->
+        <section class="view" data-view="overview">
+          <div class="ov-grid">
+            <article class="panel ov-hero">
+              <div class="ov-hero__top">
+                <div>
+                  <div class="panel__title">房间信息</div>
+                  <p class="muted ov-hero__desc">手机端扫码或输入房间号即可加入</p>
+                </div>
+                <span class="badge badge--gold" id="ovPhase">等待入场</span>
+              </div>
+
+              <div class="ov-hero__body">
+                <div class="ov-room">
+                  <div class="label">房间号 ROOM</div>
+                  <div class="code-chip ov-room__code" id="ovRoomCode">------</div>
+                  <div class="ov-room__tip" id="ovRoomTip">等待入场阶段可加入</div>
+                </div>
+                <div class="ov-qr">
+                  <div class="qr-frame ov-qr__frame">
+                    <img id="ovQr" src="" alt="加入二维码" width="132" height="132">
+                  </div>
+                  <span class="ov-qr__cap">扫码加入</span>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="ov-url">
+                <div class="grow">
+                  <div class="label">加入地址</div>
+                  <input class="input" id="ovJoinUrl" type="text" readonly aria-label="加入地址">
+                </div>
+                <button type="button" class="btn btn--ghost" id="copyUrlBtn">复制</button>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="ov-actions">
+                <button type="button" class="btn btn--gold btn--lg" id="startBtn">开始游戏</button>
+                <button type="button" class="btn btn--ghost btn--lg" id="revealBtn">提前揭晓</button>
+                <button type="button" class="btn btn--danger btn--lg" id="resetBtn">重置本轮</button>
+              </div>
+              <p class="ov-actions__hint" id="actionHint">等待玩家扫码入场</p>
+            </article>
+
+            <article class="panel ov-stats">
+              <div class="panel__title">现场数据</div>
+              <div class="stat-grid">
+                <div class="stat">
+                  <span class="stat__label">在线 / 上限</span>
+                  <span class="stat__value num" id="statOnline">0 / 30</span>
+                  <span class="stat__sub" id="statPlaying">闯关中 0 人</span>
+                </div>
+                <div class="stat">
+                  <span class="stat__label">累计中奖</span>
+                  <span class="stat__value num" id="statWins">0</span>
+                  <span class="stat__sub" id="statJoinRate">累计中奖率 0%</span>
+                  <span class="stat__sub" id="statRoundWins">本轮 0 人</span>
+                </div>
+                <div class="stat">
+                  <span class="stat__label">剩余库存</span>
+                  <span class="stat__value num" id="statRemain">0</span>
+                  <span class="stat__sub" id="statTotalQty">总库存 0</span>
+                </div>
+                <div class="stat">
+                  <span class="stat__label">奖品条目</span>
+                  <span class="stat__value num" id="statPrizeKinds">0</span>
+                  <span class="stat__sub" id="statAwarded">已发 0</span>
+                </div>
+              </div>
+              <div class="divider"></div>
+              <div class="ov-extra">
+                <div class="row row--between"><span class="muted">未通关 / 失败</span><b class="num" id="statLosses">0</b></div>
+                <div class="row row--between"><span class="muted">本场已发奖</span><b class="num" id="statAwardedPrizes">0</b></div>
+                <div class="row row--between"><span class="muted">活动标题</span><b class="ov-extra__title" id="statTitle">—</b></div>
+              </div>
+            </article>
+
+            <article class="panel ov-diff">
+              <div class="panel__title">当前难度</div>
+              <div id="ovDiffCard" class="ov-diff__card"></div>
+              <p class="ov-diff__note">难度与人数上限请在「规则设置」调整，保存后即时广播到手机端与大屏。</p>
+            </article>
+
+            <article class="panel ov-stock">
+              <div class="panel__title">库存概览</div>
+              <div id="ovStockList" class="ov-stock__list scroll"></div>
+              <button type="button" class="btn btn--ghost btn--sm btn--block" data-goto="prizes">管理全部奖品 →</button>
+            </article>
+
+            <article class="panel ov-latest">
+              <div class="panel__title">最新中奖</div>
+              <div id="ovLatest" class="ov-latest__list"></div>
+              <button type="button" class="btn btn--ghost btn--sm btn--block" data-goto="winners">查看完整名单 →</button>
+            </article>
+          </div>
+        </section>
+
+        <!-- ============ 奖品管理 ============ -->
+        <section class="view hidden" data-view="prizes">
+          <div class="section-head">
+            <div>
+              <div class="panel__title">奖品库</div>
+              <p class="muted" id="prizeSummary">—</p>
+            </div>
+            <div class="row row--wrap">
+              <button type="button" class="btn btn--gold" id="prizeAddBtn">＋ 新增奖品</button>
+              <button type="button" class="btn btn--ghost" id="prizeReseedBtn">恢复示例奖品</button>
+            </div>
+          </div>
+
+          <form class="panel prize-add hidden" id="prizeAddForm" autocomplete="off" novalidate>
+            <div class="panel__title">新增奖品</div>
+            <div class="prize-add__grid">
+              <div class="field prize-add__emoji-field">
+                <label class="label" for="addEmoji">Emoji</label>
+                <input class="input prize-add__emoji" id="addEmoji" maxlength="8" value="🎁" placeholder="🎁">
+              </div>
+              <div class="field">
+                <label class="label" for="addName">奖品名称（1–20 字）</label>
+                <input class="input" id="addName" maxlength="20" placeholder="例如：智能手表">
+              </div>
+              <div class="field">
+                <label class="label" for="addQty">数量（0–999）</label>
+                <input class="input" id="addQty" type="number" min="0" max="999" step="1" value="1" inputmode="numeric">
+              </div>
+              <div class="field">
+                <label class="label" for="addNote">备注（可选，60 字内）</label>
+                <input class="input" id="addNote" maxlength="60" placeholder="例如：一等奖 / 终极大奖">
+              </div>
+            </div>
+            <p class="field-err hidden" id="addErr" role="alert"></p>
+            <div class="row row--wrap">
+              <button type="submit" class="btn btn--gold" id="prizeAddSubmit">确认添加</button>
+              <button type="button" class="btn btn--ghost" id="prizeAddCancel">取消</button>
+            </div>
+          </form>
+
+          <div class="panel prize-panel">
+            <div class="prize-head" aria-hidden="true">
+              <span class="prize-head__order">序</span>
+              <span class="prize-head__main">奖品</span>
+              <span class="prize-head__qty">总量</span>
+              <span class="prize-head__awarded">已发</span>
+              <span class="prize-head__remain">剩余</span>
+              <span class="prize-head__actions">操作</span>
+            </div>
+            <div class="prize-list" id="prizeList"></div>
+            <p class="empty hidden" id="prizeEmpty">奖品库为空 —— 点击「新增奖品」，或「恢复示例奖品」一键填充。</p>
+          </div>
+          <p class="hint">剩余 ≤ 2 会高亮提醒；剩余为 0 的奖品无法继续发放。全部奖品发完后将自动发放「新春福袋」安慰奖。</p>
+        </section>
+
+        <!-- ============ 规则设置 ============ -->
+        <section class="view hidden" data-view="rules">
+          <form id="rulesForm" class="rules-grid" autocomplete="off" novalidate>
+            <article class="panel rules-card">
+              <div class="panel__title">玩家上限</div>
+              <div class="field">
+                <label class="label" for="maxPlayersInput">最多可加入人数（1–200）</label>
+                <input class="input" id="maxPlayersInput" type="number" min="1" max="200" step="1" inputmode="numeric">
+                <p class="field-err hidden" id="maxPlayersErr" role="alert"></p>
+              </div>
+              <p class="hint">人数达到上限后，新玩家加入会被拒绝（ROOM_FULL）。</p>
+            </article>
+
+            <article class="panel rules-card">
+              <div class="panel__title">后台 PIN</div>
+              <div class="field">
+                <label class="label" for="pinNewInput">新 PIN（4–8 位数字，留空表示不修改）</label>
+                <input class="input" id="pinNewInput" type="password" inputmode="numeric" maxlength="8"
+                       autocomplete="new-password" placeholder="••••">
+                <p class="field-err hidden" id="pinErr" role="alert"></p>
+              </div>
+              <p class="hint">修改后当前登录保持有效，下次登录请使用新 PIN。初始默认 <b class="num">8888</b>。</p>
+            </article>
+
+            <article class="panel rules-card rules-card--wide">
+              <div class="panel__title">难度档位</div>
+              <p class="rules-note">全部档位以「零容错」为基准：错一次即本波失败。最低档「简单」也极难，请谨慎选择。</p>
+              <div class="diff-grid" id="diffGrid" role="radiogroup" aria-label="难度档位"></div>
+            </article>
+
+            <article class="panel rules-card">
+              <div class="panel__title">抽奖规则</div>
+              <p class="rules-note">决定发奖时从剩余库存里取哪一件。</p>
+              <div class="seg" id="awardRuleSeg" role="radiogroup" aria-label="抽奖规则">
+                <button type="button" class="seg__item" data-rule="lowFirst" role="radio" aria-checked="false">
+                  <span class="seg__title">低价值优先</span>
+                  <span class="seg__desc">先发便宜奖品，把大奖留到后面</span>
+                </button>
+                <button type="button" class="seg__item" data-rule="highFirst" role="radio" aria-checked="false">
+                  <span class="seg__title">高价值优先</span>
+                  <span class="seg__desc">先发大奖，先到先得</span>
+                </button>
+                <button type="button" class="seg__item" data-rule="random" role="radio" aria-checked="false">
+                  <span class="seg__title">随机</span>
+                  <span class="seg__desc">在剩余库存中随机抽取</span>
+                </button>
+              </div>
+            </article>
+
+            <article class="panel rules-card">
+              <div class="panel__title">活动文案</div>
+              <div class="field">
+                <label class="label" for="titleInput">主标题（1–20 字）</label>
+                <input class="input" id="titleInput" maxlength="20">
+                <p class="field-err hidden" id="titleErr" role="alert"></p>
+              </div>
+              <div class="field">
+                <label class="label" for="subtitleInput">副标题（0–30 字）</label>
+                <input class="input" id="subtitleInput" maxlength="30">
+                <p class="field-err hidden" id="subtitleErr" role="alert"></p>
+              </div>
+            </article>
+
+            <div class="rules-actions">
+              <p class="rules-actions__hint" id="rulesDirtyHint">已与服务端同步</p>
+              <div class="row row--wrap">
+                <button type="button" class="btn btn--ghost" id="rulesDiscardBtn">放弃修改</button>
+                <button type="submit" class="btn btn--gold" id="rulesSaveBtn" disabled>保存设置</button>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <!-- ============ 玩家列表 ============ -->
+        <section class="view hidden" data-view="players">
+          <div class="section-head">
+            <div>
+              <div class="panel__title">玩家列表</div>
+              <p class="muted" id="playersSummary">—</p>
+            </div>
+            <div class="row row--wrap">
+              <span class="badge" id="playersCountBadge">0 / 30</span>
+              <button type="button" class="btn btn--ghost btn--sm" id="playersRefreshBtn">刷新</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="player-head" aria-hidden="true">
+              <span class="player-head__who">玩家</span>
+              <span class="player-head__status">状态</span>
+              <span class="player-head__prize">中奖</span>
+              <span class="player-head__score">本轮成绩</span>
+              <span class="player-head__act">操作</span>
+            </div>
+            <div class="player-list" id="playerList"></div>
+            <p class="empty hidden" id="playerEmpty">还没有玩家加入 —— 把大屏上的房间号或二维码给大家。</p>
+          </div>
+          <p class="hint">「手动发奖」会立即从当前库存发放一件奖品（不受游戏结果限制），仅对未中奖玩家可用。</p>
+        </section>
+
+        <!-- ============ 中奖名单 ============ -->
+        <section class="view hidden" data-view="winners">
+          <div class="section-head">
+            <div>
+              <div class="panel__title">中奖名单</div>
+              <p class="muted" id="winnersSummary">—</p>
+            </div>
+            <div class="row row--wrap">
+              <span class="badge badge--gold" id="winnersCountBadge">0 人</span>
+              <a class="btn btn--ghost" id="exportCsvBtn" href="/api/export/winners.csv">导出 CSV</a>
+              <button type="button" class="btn btn--danger" id="clearWinnersBtn">清空名单</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="winner-list" id="winnerList"></div>
+            <p class="empty hidden" id="winnerEmpty">还没有人中奖 —— 开赛并揭晓后，中奖记录会实时出现在这里。</p>
+          </div>
+          <p class="hint">名单实时同步（award 事件 + session.winners）。导出为 UTF-8 BOM 的 CSV，可直接用 Excel 打开。</p>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <div id="modalRoot"></div>
+
+  <script src="/js/net.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

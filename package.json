@@ -1,0 +1,18 @@
+{
+  "name": "chunjie-lottery",
+  "version": "1.0.0",
+  "private": true,
+  "description": "新春年会抽奖系统 · 灯阵·连击（主机即服务器，手机扫码加入）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "smoke": "node tools/smoke-test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}
