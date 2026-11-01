@@ -33,37 +33,45 @@ lobby ──start()──> playing(倒计时 3s) ──全部完成/主持人揭
 
 ## 2. 难度配置（服务端 `lib/difficulty.js` 为唯一数据源）
 
-依次为 `easy / normal / hard / extreme / prize`，**最低档「简单」也极难**（零容错）。
+依次为 `easy / normal / hard / extreme / prize`，参数均可现场调整（当前默认值见下）。
 
 ```jsonc
 [
-  { "key": "easy",   "label": "简单", "waveCount": 2, "zeroTolerance": true,
-    "desc": "最低档也极难：4+5 盏灯高速闪现、零容错，错一盏即出局",
-    "waves": [ { "len": 4, "showMs": 460, "gapMs": 140, "inputMs": 4600 },
-               { "len": 5, "showMs": 420, "gapMs": 130, "inputMs": 5800 } ] },
+  { "key": "easy",   "label": "简单", "waveCount": 2, "maxStrikes": 3,
+    "desc": "入门档：3+4 盏灯、闪灯 560/520ms，最多可失误 3 次",
+    "estimatedPass": "约 70%",
+    "waves": [ { "len": 3, "showMs": 560, "gapMs": 340, "inputMs": 4600 },
+               { "len": 4, "showMs": 520, "gapMs": 330, "inputMs": 5800 } ] },
 
-  { "key": "normal", "label": "标准", "waveCount": 2,
-    "waves": [ { "len": 5, "showMs": 380, "gapMs": 120, "inputMs": 4800 },
-               { "len": 6, "showMs": 340, "gapMs": 110, "inputMs": 5800 } ] },
+  { "key": "normal", "label": "标准", "waveCount": 2, "maxStrikes": 2,
+    "desc": "标准档：4+5 盏灯、复现时限充裕，最多可失误 2 次",
+    "estimatedPass": "约 55%",
+    "waves": [ { "len": 4, "showMs": 480, "gapMs": 320, "inputMs": 15000 },
+               { "len": 5, "showMs": 440, "gapMs": 310, "inputMs": 15000 } ] },
 
-  { "key": "hard",   "label": "困难", "waveCount": 3,
-    "waves": [ { "len": 5, "showMs": 340, "gapMs": 100, "inputMs": 4600 },
-               { "len": 6, "showMs": 300, "gapMs": 90,  "inputMs": 5200 },
-               { "len": 6, "showMs": 280, "gapMs": 80,  "inputMs": 5200 } ] },
+  { "key": "hard",   "label": "困难", "waveCount": 3, "maxStrikes": 1,
+    "desc": "困难档：5+6+6 三波连击，最多可失误 1 次",
+    "estimatedPass": "约 30%",
+    "waves": [ { "len": 5, "showMs": 440, "gapMs": 300, "inputMs": 15000 },
+               { "len": 6, "showMs": 400, "gapMs": 290, "inputMs": 15500 },
+               { "len": 6, "showMs": 380, "gapMs": 280, "inputMs": 15000 } ] },
 
-  { "key": "extreme","label": "极致", "waveCount": 3,
-    "waves": [ { "len": 6, "showMs": 280, "gapMs": 80, "inputMs": 4800 },
-               { "len": 7, "showMs": 240, "gapMs": 70, "inputMs": 5800 },
-               { "len": 7, "showMs": 220, "gapMs": 60, "inputMs": 5800 } ] },
+  { "key": "extreme","label": "极致", "waveCount": 3, "maxStrikes": 0,
+    "desc": "极致档：6+7+7 贴脸闪现，零容错，错一盏即出局",
+    "estimatedPass": "约 8%",
+    "waves": [ { "len": 6, "showMs": 380, "gapMs": 280, "inputMs": 15000 },
+               { "len": 7, "showMs": 340, "gapMs": 270, "inputMs": 15000 },
+               { "len": 7, "showMs": 320, "gapMs": 260, "inputMs": 15000 } ] },
 
-  { "key": "prize",  "label": "获奖", "waveCount": 1, "guaranteed": true,
-    "desc": "全员福气：完成挑战必得奖品（按库存发放）",
-    "waves": [ { "len": 2, "showMs": 900, "gapMs": 220, "inputMs": 12000 } ] }
+  { "key": "prize",  "label": "获奖", "waveCount": 1, "guaranteed": true, "maxStrikes": 99,
+    "desc": "全员福气：3 盏灯轻松完成，必得奖品（按库存发放）",
+    "estimatedPass": "必得奖",
+    "waves": [ { "len": 3, "showMs": 900, "gapMs": 320, "inputMs": 15000 } ] }
 ]
 ```
 
-- `maxStrikes`：简单/标准/困难/极致 = `0`（错一次即本波失败）；获奖 = `99`。
-- 客户端展示难度时统一从 `session.difficulty` 取 `{key,label,desc,color,estimatedPass}`。
+- `maxStrikes`：允许失误次数，`0` = 错一次即本波失败；获奖档为 `99`。
+- 客户端展示难度时统一从 `session.difficulty` 取 `{key,label,desc,color,estimatedPass,maxStrikes}`。
 - `estimatedPass` 由服务端下发（用于后台展示，标注「预估」）。
 
 ## 3. 数据模型
@@ -115,9 +123,9 @@ lobby ──start()──> playing(倒计时 3s) ──全部完成/主持人揭
   "revealAt": null,
   "config": { "maxPlayers": 30, "difficulty": "easy", "awardRule": "lowFirst",
               "title": "龙腾新春 · 年会抽奖", "subtitle": "扫码入场 · 灯阵夺魁 · 好运连连" },
-  "difficulty": { "key": "easy", "label": "简单", "desc": "…", "color": "#7fd1a4",
-                  "estimatedPass": "约 8%", "guaranteed": false,
-                  "waves": [ { "len": 3, "showMs": 480, "gapMs": 140, "inputMs": 4200 } ] },
+  "difficulty": { "key": "easy", "label": "简单", "desc": "入门档：3+4 盏灯…", "color": "#7fd1a4",
+                  "estimatedPass": "约 70%", "guaranteed": false, "maxStrikes": 3,
+                  "waves": [ { "len": 3, "showMs": 560, "gapMs": 340, "inputMs": 4600 } ] },
   "prizes": [ { "id": "p_x", "name": "智能手表", "emoji": "⌚", "quantity": 3,
                 "awarded": 0, "remaining": 3, "note": "", "order": 2 } ],
   "winners": [ /* winner[]，本轮累计（reset 保留，clear 清空） */ ],
@@ -192,9 +200,9 @@ lobby ──start()──> playing(倒计时 3s) ──全部完成/主持人揭
 `game` 事件示例：
 ```jsonc
 { "t": "game", "game": {
-  "sessionId": "s_ab12cd", "startAt": 1762000003200,
-  "difficulty": "easy", "maxStrikes": 0, "minMs": 2500,
-  "waves": [ { "len": 3, "showMs": 480, "gapMs": 140, "inputMs": 4200 } ] } }
+  "sessionId": "s_ab12cd", "startAt": 1762000003200, "seed": 123456789,
+  "difficulty": "easy", "maxStrikes": 3, "minMs": 5430,
+  "waves": [ { "len": 3, "showMs": 560, "gapMs": 340, "inputMs": 4600 } ] } }
 ```
 
 ## 6. 玩法「灯阵·连击」与判定

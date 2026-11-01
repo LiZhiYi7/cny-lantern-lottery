@@ -853,7 +853,7 @@
       els.diffBadge.style.borderColor = d.color ? d.color + "66" : "";
     }
     setText(els.diffPass, "预估通关 " + (d.estimatedPass || "—"));
-    setText(els.diffDesc, d.desc || "最低档也极难：两波灯阵、零容错");
+    setText(els.diffDesc, d.desc || "按顺序复现灯阵，注意每档允许的失误次数");
     var waveCount = Number(d.waveCount) || (Array.isArray(d.waves) ? d.waves.length : 2);
     setText(els.diffWaves, waveCount + " 波");
     var maxStrikes = typeof d.maxStrikes === "number" ? d.maxStrikes : d.guaranteed ? 99 : 0;

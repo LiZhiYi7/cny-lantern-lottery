@@ -24,11 +24,11 @@
 
   /* 服务端未下发 difficulties 时的兜底（正常情况下用 /api/admin/data 的 difficulties） */
   var DIFF_FALLBACK = [
-    { key: "easy", label: "简单", desc: "入门即硬核：8 盏灯、零失误才通关", estimatedPass: "约 8%", color: "#7fd1a4", guaranteed: false, waveCount: 2 },
-    { key: "normal", label: "标准", desc: "4+5 连击 · 零容错", estimatedPass: "约 5%", color: "#7fc4d1", guaranteed: false, waveCount: 2 },
-    { key: "hard", label: "困难", desc: "3 波连击 · 最长 5 灯 · 零容错", estimatedPass: "约 2%", color: "#e9b949", guaranteed: false, waveCount: 3 },
-    { key: "extreme", label: "极致", desc: "3 波 · 最长 6 灯 · 极速闪现 · 零容错", estimatedPass: "约 0.6%", color: "#ef6a63", guaranteed: false, waveCount: 3 },
-    { key: "prize", label: "获奖", desc: "全员福气：完成挑战必得奖品（按库存发放）", estimatedPass: "约 100%", color: "#f7d488", guaranteed: true, waveCount: 1 }
+    { key: "easy", label: "简单", desc: "入门档：3+4 盏灯 · 可失误 3 次", estimatedPass: "约 70%", color: "#7fd1a4", guaranteed: false, maxStrikes: 3, waveCount: 2 },
+    { key: "normal", label: "标准", desc: "标准档：4+5 盏灯 · 可失误 2 次", estimatedPass: "约 55%", color: "#7fc4d1", guaranteed: false, maxStrikes: 2, waveCount: 2 },
+    { key: "hard", label: "困难", desc: "困难档：5+6+6 三波 · 可失误 1 次", estimatedPass: "约 30%", color: "#e9b949", guaranteed: false, maxStrikes: 1, waveCount: 3 },
+    { key: "extreme", label: "极致", desc: "极致档：6+7+7 · 零容错", estimatedPass: "约 8%", color: "#ef6a63", guaranteed: false, maxStrikes: 0, waveCount: 3 },
+    { key: "prize", label: "获奖", desc: "全员福气：完成挑战必得奖品（按库存发放）", estimatedPass: "必得奖", color: "#f7d488", guaranteed: true, maxStrikes: 99, waveCount: 1 }
   ];
 
   var VIEW_META = {
@@ -426,7 +426,7 @@
         '<div class="ov-diff__row">' +
           '<span class="ov-diff__dot" style="--diff-color:' + color + '"></span>' +
           '<span class="ov-diff__name">' + esc(d.label || d.key || "—") + "</span>" +
-          (d.guaranteed ? '<span class="badge badge--jade">全员必得</span>' : '<span class="badge badge--red">零容错</span>') +
+          (d.guaranteed ? '<span class="badge badge--jade">全员必得</span>' : (Number(d.maxStrikes) > 0 ? '<span class="badge badge--gold">可失误 ' + Number(d.maxStrikes) + ' 次</span>' : '<span class="badge badge--red">零容错</span>')) +
         "</div>" +
         '<p class="ov-diff__desc">' + esc(d.desc || "") + "</p>" +
         '<div class="ov-diff__meta">' +
@@ -596,8 +596,11 @@
       var color = safeColor(d.color) || "#e9b949";
       var waves = d.waveCount || (Array.isArray(d.waves) ? d.waves.length : 0);
       var flags = "";
-      if (d.key === "easy") {
-        flags += '<span class="diff-card__flag diff-card__flag--hard">最低档也极难 · 零容错</span>';
+      var dStrikes = typeof d.maxStrikes === "number" ? d.maxStrikes : (d.guaranteed ? 99 : 0);
+      if (!d.guaranteed) {
+        flags += dStrikes > 0
+          ? '<span class="diff-card__flag diff-card__flag--hard">可失误 ' + dStrikes + " 次</span>"
+          : '<span class="diff-card__flag diff-card__flag--hard">零容错</span>';
       }
       if (d.guaranteed) {
         flags += '<span class="diff-card__flag diff-card__flag--guaranteed">全员必得 · 按库存</span>';

@@ -113,7 +113,7 @@ node tools/browser-qa.js      # 自起 8790 + Edge headless（自动选空闲 CD
 **D. 配置修改**
 - ✅ D1 非法配置值（人数/难度/规则/标题/副标题/PIN 共 15 组）全部 400 `BAD_INPUT`
 - ✅ D2 合法配置即时生效并同步 session（人数/规则/标题/副标题/难度）
-- ✅ D5 5 档难度由服务端下发且逐级加难（最低档也零容错；`easy ≥ 4+5`、`easy<normal<hard<extreme`、prize 保底 `maxStrikes=99`）
+- ✅ D5 5 档难度由服务端下发且逐级加难（容错次数单调不增、总灯数单调不减；prize 保底 `maxStrikes=99`；参数以 `lib/difficulty.js` 为准）
 - ✅ D3 修改 PIN 后当前登录会话保持有效（旧 PIN 失效、新 PIN 可登录）
 - ✅ D4 修改标题后大屏通过 SSE 收到最新 `session`
 
@@ -471,3 +471,22 @@ LAN /api/qr.svg?text=hello -> HTTP 200 (941 bytes, image/svg+xml; charset=utf-8)
 - **FIX-B（文档口径）**：`PROTOCOL.md` §5 的「80ms 合并」已改为与实际一致的「60ms」，BUG-09 关闭。
 - **截图集**：`docs/screenshots/` 共 15 张，已用修复后版本覆盖（含 `host-lobby-1280.png`）；`player-offline-390.png` / `player-reset-390.png` 按 QA 原定口径留在 `_tmp`，不进入正式集。
 - **回归说明**：本轮只改 `public/js/art.js` 与文档，服务端 API/判定未变，smoke 73/73、e2e 14/14 结论继续有效。
+
+---
+
+## 12. 难度参数自定义与回归（交付后调优）
+
+交付后使用者按现场需要调整了 `lib/difficulty.js` 的难度数值（当前参数见 `lib/difficulty.js` 与 README §3），并已保留在仓库中。为保持契约与文档一致，本轮做了以下同步：
+
+- `lib/difficulty.js`：补回 `desc` / `estimatedPass` 元数据（不改玩法数值），`publicInfo` 重新下发这两个字段；
+- 三端文案：后台难度卡、大屏/手机端难度说明改为按 `maxStrikes` 动态显示「零容错 / 可失误 N 次」，不再硬编码；
+- `tools/smoke-test.js`：难度断言改为以 `lib/difficulty.js` 为唯一期望源（自动跟随参数），并校验「总灯数单调不减、容错次数单调不增」；
+- README §3 难度表、PROTOCOL §2 示例、`docs/screenshots/`（15 张重新截图，内容含最新难度文案）。
+
+回归（2026-11-01 16:10，当前参数）：
+
+- `node tools/smoke-test.js` → **73 / 73 通过**
+- `node tools/e2e-sim.js` → **14 / 14 通过**
+- `node tools/browser-qa.js` → **26 / 26 通过**，15 张截图已覆盖
+
+> 后续若要再改难度，只需编辑 `lib/difficulty.js`（重启生效），测试与三端展示会自动跟随；README/PROTOCOL 中的表格建议同步更新。

@@ -24,6 +24,8 @@ const path = require("path");
 const { spawn } = require("child_process");
 
 const ROOT = path.resolve(__dirname, "..");
+// 以 lib/difficulty.js 为唯一数据源生成期望值，参数调整后测试自动跟随
+const difficulty = require(path.join(ROOT, "lib", "difficulty"));
 const PORT = Number(process.env.QA_PORT || 8790);
 const HOST = "127.0.0.1";
 const BASE = "http://" + HOST + ":" + PORT;
@@ -597,7 +599,8 @@ async function main() {
         ["len", "showMs", "gapMs", "inputMs"].forEach((k) => ok(typeof w[k] === "number", "waves[" + i + "] 缺少 " + k));
         ok(w.len >= 2 && w.inputMs >= 1000, "waves[" + i + "] 数值异常: " + fmt(w));
       });
-      eq(d.maxStrikes, 0, "简单档 maxStrikes 必须为 0（零容错）");
+      eq(d.maxStrikes, difficulty.publicInfo("easy").maxStrikes, "简单档 maxStrikes 应与 lib/difficulty.js 一致");
+      eq(d.waveCount, difficulty.publicInfo("easy").waveCount, "简单档 waveCount 应与配置一致");
     });
 
     /* ---------------------------------------------------------------- B 加入 */
@@ -806,7 +809,7 @@ async function main() {
       eq(s.config.difficulty, "normal", "session.config.difficulty 未同步");
       eq(s.difficulty.key, "normal", "session.difficulty.key 未同步");
       eq(s.difficulty.waves.length, 2, "normal 应有 2 波");
-      eq(s.difficulty.maxStrikes, 0, "normal maxStrikes 应为 0");
+      eq(s.difficulty.maxStrikes, difficulty.publicInfo("normal").maxStrikes, "normal maxStrikes 应与配置一致");
       await setConfig({ difficulty: "hard" });
       s = await fetchSession();
       eq(s.difficulty.key, "hard", "切换 hard");
@@ -822,7 +825,7 @@ async function main() {
       eq(s.difficulty.waves.length, 1, "prize 档 1 波");
     });
 
-    await t("D5 5 档难度由服务端下发且逐级加难（最低档也零容错，§2）", async () => {
+    await t("D5 5 档难度由服务端下发且逐级加难（参数与 lib/difficulty.js 一致，§2）", async () => {
       const d = await adminData();
       const keys = ["easy", "normal", "hard", "extreme", "prize"];
       const byKey = {};
@@ -831,18 +834,23 @@ async function main() {
       });
       keys.forEach((k) => ok(byKey[k], "缺少难度档 " + k));
       ["easy", "normal", "hard", "extreme"].forEach((k) => {
-        eq(byKey[k].maxStrikes, 0, k + " 档 maxStrikes 必须为 0（零容错）");
+        const expect = difficulty.publicInfo(k);
+        eq(byKey[k].maxStrikes, expect.maxStrikes, k + " 档 maxStrikes 应与配置一致");
         eq(byKey[k].guaranteed, false, k + " 档不应是保底档");
-        ok(byKey[k].waves.length >= 1, k + " 档 waves 异常");
+        eq(JSON.stringify(byKey[k].waves), JSON.stringify(expect.waves), k + " 档 waves 应与配置一致");
       });
       eq(byKey.prize.guaranteed, true, "prize 档应为保底");
       eq(byKey.prize.maxStrikes, 99, "prize 档 maxStrikes");
       const total = (k) => byKey[k].waves.reduce((s, w) => s + w.len, 0);
-      // 难度平衡：简单也必须很难（总灯数 ≥ 4+5），且各档逐级加难
-      ok(total("easy") >= 9, "简单档总灯数应 ≥ 9（最低档也极难），实际 " + total("easy"));
-      ok(total("normal") > total("easy"), "标准档应难于简单档：normal=" + total("normal") + " easy=" + total("easy"));
-      ok(total("hard") > total("normal"), "困难档应难于标准档：hard=" + total("hard") + " normal=" + total("normal"));
-      ok(total("extreme") > total("hard"), "极致档应难于困难档：extreme=" + total("extreme") + " hard=" + total("hard"));
+      // 难度阶梯：总灯数单调不减、容错次数单调不增
+      let prevTotal = 0;
+      let prevStrikes = 999;
+      ["easy", "normal", "hard", "extreme"].forEach((k) => {
+        ok(total(k) >= prevTotal, k + " 档总灯数应不低于上一档：" + k + "=" + total(k) + " prev=" + prevTotal);
+        ok(byKey[k].maxStrikes <= prevStrikes, k + " 档容错次数应不高于上一档：" + k + "=" + byKey[k].maxStrikes + " prev=" + prevStrikes);
+        prevTotal = total(k);
+        prevStrikes = byKey[k].maxStrikes;
+      });
       ["easy", "normal", "hard", "extreme"].forEach((k) => {
         ok(byKey[k].estimatedPass && byKey[k].estimatedPass.length > 0, k + " 档 estimatedPass 应下发");
         ok(byKey[k].desc && byKey[k].desc.length > 6, k + " 档 desc 应可读");
@@ -1054,7 +1062,7 @@ async function main() {
         eq(g.sessionId, session.sessionId, "game.sessionId 应与 session 一致");
         eq(g.startAt, session.startAt, "game.startAt 应与 session 一致");
         eq(g.difficulty, "easy", "game.difficulty");
-        eq(g.maxStrikes, 0, "easy maxStrikes 应为 0");
+        eq(g.maxStrikes, difficulty.publicInfo("easy").maxStrikes, "game.maxStrikes 应与配置一致");
         ok(Number.isInteger(g.seed) && g.seed > 0, "game.seed 应为正整数随机种子，实际 " + fmt(g.seed));
         ok(Array.isArray(g.waves) && g.waves.length === 2, "easy game.waves 应为 2 波");
         g.waves.forEach((w, i) => {

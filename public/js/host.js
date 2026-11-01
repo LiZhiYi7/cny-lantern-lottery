@@ -373,7 +373,7 @@
     else if (diff.waveCount != null) waves = num(diff.waveCount);
     $("pDiffWaves").textContent =
       (waves ? waves + " 波灯阵" : "灯阵挑战") + (diff.guaranteed ? " · 必得奖品" : "");
-    $("pDiffDesc").textContent = diff.desc || "按顺序复现灯阵，零失误才能通关";
+    $("pDiffDesc").textContent = diff.desc || "按顺序复现灯阵，注意每档允许的失误次数";
     $("pDiffPass").textContent = diff.estimatedPass || "—";
 
     renderTicker();
